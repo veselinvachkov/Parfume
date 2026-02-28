@@ -25,17 +25,20 @@ export async function POST(req: Request) {
       .values({ name, slug })
       .returning();
     return NextResponse.json(brand, { status: 201 });
-  } catch {
-    const existing = await db
-      .select()
-      .from(brands)
-      .where(eq(brands.slug, slug));
-    if (existing.length > 0) {
-      return NextResponse.json(
-        { error: "A brand with this name already exists" },
-        { status: 409 }
-      );
-    }
-    return NextResponse.json({ error: "Failed to create brand" }, { status: 500 });
+  } catch (err) {
+    try {
+      const existing = await db
+        .select()
+        .from(brands)
+        .where(eq(brands.slug, slug));
+      if (existing.length > 0) {
+        return NextResponse.json(
+          { error: "A brand with this name already exists" },
+          { status: 409 }
+        );
+      }
+    } catch { /* ignore secondary check failure */ }
+    const message = err instanceof Error ? err.message : "Failed to create brand";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

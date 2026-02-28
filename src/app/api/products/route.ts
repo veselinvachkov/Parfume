@@ -91,10 +91,15 @@ export async function POST(req: Request) {
   const category = categoryRaw === "cosmetic" ? "cosmetic" : ("parfum" as const);
 
   const slug = slugify(name);
-  const [product] = await db
-    .insert(products)
-    .values({ name, slug, brandId, category, description, price, stock, imageUrl })
-    .returning();
 
-  return NextResponse.json(product, { status: 201 });
+  try {
+    const [product] = await db
+      .insert(products)
+      .values({ name, slug, brandId, category, description, price, stock, imageUrl })
+      .returning();
+    return NextResponse.json(product, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to create product";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
