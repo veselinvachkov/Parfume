@@ -1,5 +1,4 @@
-import { writeFile } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
 import { ALLOWED_MIME_TYPES, MAX_UPLOAD_BYTES } from "./constants";
 
@@ -14,8 +13,6 @@ export async function saveUploadedFile(file: File): Promise<string> {
   }
   const ext = file.name.split(".").pop() ?? "jpg";
   const name = `${randomUUID()}.${ext}`;
-  const dest = path.join(process.cwd(), "public", "uploads", name);
-  const buf = Buffer.from(await file.arrayBuffer());
-  await writeFile(dest, buf);
-  return `/uploads/${name}`;
+  const { url } = await put(name, file, { access: "public" });
+  return url;
 }
