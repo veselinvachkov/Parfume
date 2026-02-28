@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import type { Order, OrderItem } from "@/types";
 
 interface OrderTableProps {
