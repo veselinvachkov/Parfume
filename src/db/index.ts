@@ -1,16 +1,10 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 
-const globalForDb = globalThis as unknown as {
-  _db?: ReturnType<typeof drizzle>;
-};
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-function createDb() {
-  const sqlite = new Database(process.env.DATABASE_URL ?? "./local.db");
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  return drizzle(sqlite, { schema });
-}
-
-export const db = globalForDb._db ?? (globalForDb._db = createDb());
+export const db = drizzle(client, { schema });
