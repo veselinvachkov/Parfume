@@ -40,15 +40,20 @@ export function BrandForm({ brand }: BrandFormProps) {
     const url = isEdit ? `/api/brands/${brand.id}` : "/api/brands";
     const method = isEdit ? "PUT" : "POST";
 
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(values),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      });
 
-    if (!res.ok) {
-      const data = await res.json() as { error?: string };
-      toast.error(data.error ?? "Неуспешно запазване на марка");
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        toast.error(data.error ?? "Неуспешно запазване на марка");
+        return;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Мрежова грешка");
       return;
     }
 

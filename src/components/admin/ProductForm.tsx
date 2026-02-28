@@ -96,11 +96,16 @@ export function ProductForm({ product, brands }: ProductFormProps) {
     const url = isEdit ? `/api/products/${product.id}` : "/api/products";
     const method = isEdit ? "PUT" : "POST";
 
-    const res = await fetch(url, { method, body: formData });
+    try {
+      const res = await fetch(url, { method, body: formData });
 
-    if (!res.ok) {
-      const data = await res.json() as { error?: string };
-      toast.error(data.error ?? "Неуспешно запазване на продукт");
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        toast.error(data.error ?? "Неуспешно запазване на продукт");
+        return;
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Мрежова грешка");
       return;
     }
 
