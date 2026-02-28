@@ -1,14 +1,6 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST ?? "smtp.mail.bg",
-  port: Number(process.env.SMTP_PORT ?? 465),
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER ?? "aromaten@mail.bg",
-    pass: process.env.SMTP_PASS ?? "",
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 interface OrderConfirmationOptions {
   to: string;
@@ -59,8 +51,8 @@ export async function sendOrderConfirmation(opts: OrderConfirmationOptions) {
       <p style="color:#888;font-size:13px">Aromaten &mdash; Ароматно Магазинче</p>
     </div>`;
 
-  await transporter.sendMail({
-    from: `"Aromaten" <${process.env.SMTP_USER ?? "aromatnomagazinche@abv.bg"}>`,
+  await resend.emails.send({
+    from: "Aromaten <onboarding@resend.dev>",
     to: opts.to,
     subject: `Потвърждение на поръчка #${opts.orderId}`,
     html,
