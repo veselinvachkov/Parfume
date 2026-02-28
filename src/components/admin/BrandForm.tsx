@@ -48,8 +48,13 @@ export function BrandForm({ brand }: BrandFormProps) {
       });
 
       if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        toast.error(data.error ?? "Неуспешно запазване на марка");
+        const text = await res.text();
+        let message = `Грешка ${res.status}`;
+        try {
+          const data = JSON.parse(text) as { error?: string };
+          if (data.error) message = data.error;
+        } catch { /* not JSON */ }
+        toast.error(message);
         return;
       }
     } catch (err) {
