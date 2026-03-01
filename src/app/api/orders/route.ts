@@ -78,7 +78,7 @@ export async function POST(req: Request) {
       return { orderId: insertedOrder.id, totalAmount, snapshots };
     });
 
-    sendOrderConfirmation({
+    await sendOrderConfirmation({
       to: customerEmail,
       customerName,
       orderId: result.orderId,
