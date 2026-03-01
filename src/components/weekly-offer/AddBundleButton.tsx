@@ -37,19 +37,30 @@ export function AddBundleButton({ offerId, title, comboPrice, stock, coverImageU
     );
   }
 
-  if (added || inCart) {
-    return (
-      <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-green-600 border-green-600" disabled={!!added}>
-        <CheckCircle2 className="h-5 w-5" />
-        {added ? "Добавено!" : `В количката (${inCart!.quantity} бр.)`}
-      </Button>
-    );
-  }
-
   return (
-    <Button size="lg" onClick={handleAdd} className="w-full sm:w-auto gap-2">
-      <ShoppingBag className="h-5 w-5" />
-      Добави пакета в количката
+    <Button
+      size="lg"
+      onClick={handleAdd}
+      variant={inCart ? "outline" : "default"}
+      className={`w-full sm:w-auto gap-2 ${inCart ? "text-green-600 border-green-600 hover:text-green-700 hover:border-green-700" : ""}`}
+      disabled={added}
+    >
+      {added ? (
+        <>
+          <CheckCircle2 className="h-5 w-5" />
+          Добавено!
+        </>
+      ) : inCart ? (
+        <>
+          <ShoppingBag className="h-5 w-5" />
+          Добави още ({inCart.quantity} в количката)
+        </>
+      ) : (
+        <>
+          <ShoppingBag className="h-5 w-5" />
+          Добави пакета в количката
+        </>
+      )}
     </Button>
   );
 }
