@@ -25,6 +25,7 @@ export async function POST(req: Request) {
     title: string;
     description?: string;
     comboPrice: number;
+    stock: number;
     isActive: boolean;
     startsAt?: string;
     endsAt?: string;
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     giftProductId: number;
   };
 
-  const { title, description, comboPrice, isActive, startsAt, endsAt, productIds, giftProductId } = body;
+  const { title, description, comboPrice, stock, isActive, startsAt, endsAt, productIds, giftProductId } = body;
 
   if (!title || comboPrice <= 0 || productIds.length === 0) {
     return NextResponse.json({ error: "Невалидни данни" }, { status: 400 });
@@ -63,6 +64,7 @@ export async function POST(req: Request) {
         title,
         description: description ?? null,
         comboPrice,
+        stock: stock ?? 0,
         isActive,
         startsAt: startsAt ?? null,
         endsAt: endsAt ?? null,

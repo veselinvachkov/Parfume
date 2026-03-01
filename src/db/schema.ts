@@ -78,6 +78,7 @@ export const weeklyOffers = sqliteTable("weekly_offers", {
   title: text("title").notNull().default("Седмично предложение"),
   description: text("description"),
   comboPrice: real("combo_price").notNull(),
+  stock: int("stock").notNull().default(0),
   isActive: int("is_active", { mode: "boolean" }).notNull().default(false),
   startsAt: text("starts_at"),
   endsAt: text("ends_at"),

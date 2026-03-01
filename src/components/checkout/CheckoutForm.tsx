@@ -30,7 +30,7 @@ type FormValues = z.infer<typeof schema>;
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { items, clearCart } = useCartStore();
+  const { items, bundles, clearCart } = useCartStore();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -43,7 +43,7 @@ export function CheckoutForm() {
   });
 
   async function onSubmit(values: FormValues) {
-    if (items.length === 0) {
+    if (items.length === 0 && bundles.length === 0) {
       toast.error("Вашата количка е празна");
       return;
     }
@@ -51,6 +51,13 @@ export function CheckoutForm() {
     const payload: CheckoutPayload = {
       ...values,
       items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      bundles: bundles.map((b) => ({
+        offerId: b.offerId,
+        title: b.title,
+        comboPrice: b.comboPrice,
+        quantity: b.quantity,
+        products: b.products,
+      })),
     };
 
     const res = await fetch("/api/orders", {
@@ -133,7 +140,7 @@ export function CheckoutForm() {
           type="submit"
           className="w-full"
           size="lg"
-          disabled={form.formState.isSubmitting || items.length === 0}
+          disabled={form.formState.isSubmitting || (items.length === 0 && bundles.length === 0)}
         >
           {form.formState.isSubmitting ? "Обработване..." : "Направи Поръчка"}
         </Button>

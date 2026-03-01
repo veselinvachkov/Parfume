@@ -32,10 +32,33 @@ export type CartItemPayload = {
   imageUrl: string | null;
 };
 
+export type CartBundleProduct = {
+  productId: number;
+  name: string;
+  unitPrice: number;
+  isGift: boolean;
+};
+
+export type CartBundle = {
+  offerId: number;
+  title: string;
+  comboPrice: number;
+  quantity: number;
+  coverImageUrl: string | null;
+  products: CartBundleProduct[];
+};
+
 export type CheckoutPayload = {
   customerName: string;
   customerEmail: string;
   phone: string;
   address: string;
   items: { productId: number; quantity: number }[];
+  bundles?: {
+    offerId: number;
+    title: string;
+    comboPrice: number;
+    quantity: number;
+    products: CartBundleProduct[];
+  }[];
 };

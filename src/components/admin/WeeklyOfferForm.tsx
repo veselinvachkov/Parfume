@@ -33,6 +33,7 @@ export function WeeklyOfferForm({ products, offer }: Props) {
   const [comboPrice, setComboPrice] = useState(
     offer?.comboPrice?.toString() ?? ""
   );
+  const [stock, setStock] = useState(offer?.stock?.toString() ?? "0");
   const [isActive, setIsActive] = useState(offer?.isActive ?? false);
   const [startsAt, setStartsAt] = useState(offer?.startsAt?.slice(0, 10) ?? "");
   const [endsAt, setEndsAt] = useState(offer?.endsAt?.slice(0, 10) ?? "");
@@ -82,6 +83,7 @@ export function WeeklyOfferForm({ products, offer }: Props) {
       title,
       description,
       comboPrice: price,
+      stock: parseInt(stock, 10) || 0,
       isActive,
       startsAt: startsAt || undefined,
       endsAt: endsAt || undefined,
@@ -272,7 +274,18 @@ export function WeeklyOfferForm({ products, offer }: Props) {
       )}
 
       {/* Pricing & dates */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Бройки (наличност)</label>
+          <Input
+            type="number"
+            min="0"
+            step="1"
+            value={stock}
+            onChange={(e) => setStock(e.target.value)}
+            placeholder="напр. 10"
+          />
+        </div>
         <div className="space-y-1.5">
           <label className="text-sm font-medium">Цена на комбото (лв.)</label>
           <Input

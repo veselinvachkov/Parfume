@@ -1,10 +1,17 @@
 import { db } from "@/db";
-import { orders, orderItems, products } from "@/db/schema";
+import { orders, orderItems, products, weeklyOffers } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { sendOrderConfirmation } from "@/lib/email";
 import { NextResponse } from "next/server";
 
 type OrderItemInput = { productId: number; quantity: number };
+type BundleInput = {
+  offerId: number;
+  title: string;
+  comboPrice: number;
+  quantity: number;
+  products: { productId: number; name: string; unitPrice: number; isGift: boolean }[];
+};
 
 export async function POST(req: Request) {
   const body = await req.json() as {
@@ -13,11 +20,15 @@ export async function POST(req: Request) {
     phone?: string;
     address?: string;
     items?: OrderItemInput[];
+    bundles?: BundleInput[];
   };
 
-  const { customerName, customerEmail, phone, address, items } = body;
+  const { customerName, customerEmail, phone, address, items = [], bundles = [] } = body;
 
-  if (!customerName || !customerEmail || !phone || !address || !items?.length) {
+  if (!customerName || !customerEmail || !phone || !address) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+  if (items.length === 0 && bundles.length === 0) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
@@ -31,29 +42,62 @@ export async function POST(req: Request) {
         quantity: number;
       }[] = [];
 
+      // Process regular items
       for (const item of items) {
         const [row] = await tx
-          .select({
-            id: products.id,
-            name: products.name,
-            price: products.price,
-            stock: products.stock,
-          })
+          .select({ id: products.id, name: products.name, price: products.price, stock: products.stock })
           .from(products)
           .where(eq(products.id, item.productId));
 
         if (!row) throw new Error(`Product ${item.productId} not found`);
-        if (row.stock < item.quantity) {
-          throw new Error(`Insufficient stock for "${row.name}"`);
+        if (row.stock < item.quantity) throw new Error(`Insufficient stock for "${row.name}"`);
+
+        snapshots.push({ productId: item.productId, productName: row.name, unitPrice: row.price, quantity: item.quantity });
+        totalAmount += row.price * item.quantity;
+      }
+
+      // Process bundles
+      for (const bundle of bundles) {
+        // Check weekly offer stock
+        const [offer] = await tx
+          .select({ id: weeklyOffers.id, stock: weeklyOffers.stock })
+          .from(weeklyOffers)
+          .where(eq(weeklyOffers.id, bundle.offerId));
+
+        if (!offer) throw new Error(`Offer ${bundle.offerId} not found`);
+        if (offer.stock < bundle.quantity) throw new Error(`Insufficient stock for "${bundle.title}"`);
+
+        // Deduct each product's stock
+        for (const p of bundle.products) {
+          const [row] = await tx
+            .select({ id: products.id, stock: products.stock })
+            .from(products)
+            .where(eq(products.id, p.productId));
+
+          if (!row) throw new Error(`Product ${p.productId} not found`);
+          if (row.stock < bundle.quantity) throw new Error(`Insufficient stock for product in "${bundle.title}"`);
+
+          await tx
+            .update(products)
+            .set({ stock: sql`${products.stock} - ${bundle.quantity}` })
+            .where(eq(products.id, p.productId));
         }
 
+        // Deduct bundle stock
+        await tx
+          .update(weeklyOffers)
+          .set({ stock: sql`${weeklyOffers.stock} - ${bundle.quantity}` })
+          .where(eq(weeklyOffers.id, bundle.offerId));
+
+        // Add as single line item (first non-gift product as reference)
+        const refProduct = bundle.products.find((p) => !p.isGift) ?? bundle.products[0];
         snapshots.push({
-          productId: item.productId,
-          productName: row.name,
-          unitPrice: row.price,
-          quantity: item.quantity,
+          productId: refProduct.productId,
+          productName: `Пакет: ${bundle.title}`,
+          unitPrice: bundle.comboPrice,
+          quantity: bundle.quantity,
         });
-        totalAmount += row.price * item.quantity;
+        totalAmount += bundle.comboPrice * bundle.quantity;
       }
 
       const [insertedOrder] = await tx
@@ -69,10 +113,14 @@ export async function POST(req: Request) {
           unitPrice: s.unitPrice,
           quantity: s.quantity,
         });
+      }
+
+      // Deduct stock for regular items
+      for (const item of items) {
         await tx
           .update(products)
-          .set({ stock: sql`${products.stock} - ${s.quantity}` })
-          .where(eq(products.id, s.productId));
+          .set({ stock: sql`${products.stock} - ${item.quantity}` })
+          .where(eq(products.id, item.productId));
       }
 
       return { orderId: insertedOrder.id, totalAmount, snapshots };

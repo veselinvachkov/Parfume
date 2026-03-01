@@ -54,6 +54,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     title: string;
     description?: string;
     comboPrice: number;
+    stock: number;
     isActive: boolean;
     startsAt?: string;
     endsAt?: string;
@@ -61,7 +62,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     giftProductId: number;
   };
 
-  const { title, description, comboPrice, isActive, startsAt, endsAt, productIds, giftProductId } = body;
+  const { title, description, comboPrice, stock, isActive, startsAt, endsAt, productIds, giftProductId } = body;
 
   const [existing] = await db.select().from(weeklyOffers).where(eq(weeklyOffers.id, offerId));
   if (!existing) return NextResponse.json({ error: "Не е намерено" }, { status: 404 });
@@ -79,6 +80,7 @@ export async function PUT(req: Request, { params }: Ctx) {
         title,
         description: description ?? null,
         comboPrice,
+        stock: stock ?? 0,
         isActive,
         startsAt: startsAt ?? null,
         endsAt: endsAt ?? null,

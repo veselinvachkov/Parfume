@@ -13,6 +13,7 @@ import { Toaster } from "@/components/ui/sonner";
 export default function CheckoutPage() {
   const [hydrated, setHydrated] = useState(false);
   const items = useCartStore((s) => s.items);
+  const bundles = useCartStore((s) => s.bundles);
 
   useEffect(() => setHydrated(true), []);
 
@@ -26,7 +27,7 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && bundles.length === 0) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-12 text-center space-y-4">
         <p className="text-lg font-medium">Вашата количка е празна</p>

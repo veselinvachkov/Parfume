@@ -3,21 +3,19 @@ import { db } from "@/db";
 import { weeklyOffers, weeklyOfferProducts, products, brands } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
 import Image from "next/image";
-import { Gift, Package, ShoppingBag } from "lucide-react";
-import Link from "next/link";
+import { Gift, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { AddBundleButton } from "@/components/weekly-offer/AddBundleButton";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Седмично предложение + подарък – Aromaten",
-  description:
-    "Специална седмична оферта с безплатен подарък от Aromaten. Не пропускайте!",
+  description: "Специална седмична оферта с безплатен подарък от Aromaten. Не пропускайте!",
 };
 
 export default async function SedmichnoPredlozheniePage() {
-  // Find the active offer
   const [offer] = await db
     .select()
     .from(weeklyOffers)
@@ -29,24 +27,17 @@ export default async function SedmichnoPredlozheniePage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-8">
         <div className="flex items-center gap-3">
           <Gift className="h-8 w-8 text-amber-500" />
-          <h1 className="text-3xl font-bold tracking-tight">
-            Седмично предложение + подарък
-          </h1>
+          <h1 className="text-3xl font-bold tracking-tight">Седмично предложение + подарък</h1>
         </div>
         <div className="rounded-xl border-2 border-dashed border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 p-10 text-center">
           <Gift className="h-12 w-12 text-amber-400 mx-auto mb-4" />
-          <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">
-            Предстои ни скоро!
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Следете ни в Instagram и Facebook за анонса.
-          </p>
+          <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">Предстои ни скоро!</p>
+          <p className="text-sm text-muted-foreground mt-2">Следете ни в Instagram и Facebook за анонса.</p>
         </div>
       </div>
     );
   }
 
-  // Fetch the offer's products
   const items = await db
     .select({
       id: weeklyOfferProducts.id,
@@ -68,6 +59,14 @@ export default async function SedmichnoPredlozheniePage() {
   const giftItem = items.find((i) => i.isGift);
   const regularTotal = comboItems.reduce((s, i) => s + (i.price ?? 0), 0);
   const savings = regularTotal - offer.comboPrice;
+  const coverImageUrl = comboItems[0]?.imageUrl ?? null;
+
+  const bundleProducts = items.map((i) => ({
+    productId: i.productId!,
+    name: i.name ?? "",
+    unitPrice: i.price ?? 0,
+    isGift: i.isGift,
+  }));
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-10">
@@ -86,6 +85,17 @@ export default async function SedmichnoPredlozheniePage() {
         {offer.description && (
           <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
         )}
+        <div className="flex items-center gap-2 pt-1">
+          {offer.stock > 0 ? (
+            <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
+              Оставащи: {offer.stock} бр.
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-red-600 border-red-300 bg-red-50">
+              Изчерпано
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Combo products */}
@@ -96,14 +106,8 @@ export default async function SedmichnoPredlozheniePage() {
             <div key={item.id} className="flex items-center gap-4 px-5 py-4">
               <div className="h-16 w-16 rounded-md border bg-muted overflow-hidden shrink-0">
                 {item.imageUrl ? (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name ?? ""}
-                    width={64}
-                    height={64}
-                    className="object-cover w-full h-full"
-                    unoptimized
-                  />
+                  <Image src={item.imageUrl} alt={item.name ?? ""} width={64} height={64}
+                    className="object-cover w-full h-full" unoptimized />
                 ) : (
                   <Package className="h-7 w-7 m-4.5 text-muted-foreground" />
                 )}
@@ -128,14 +132,8 @@ export default async function SedmichnoPredlozheniePage() {
           <div className="flex items-center gap-4 px-5 py-4 rounded-xl border-2 border-amber-300 bg-amber-50 dark:bg-amber-950/20">
             <div className="h-16 w-16 rounded-md border bg-white overflow-hidden shrink-0">
               {giftItem.imageUrl ? (
-                <Image
-                  src={giftItem.imageUrl}
-                  alt={giftItem.name ?? ""}
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                  unoptimized
-                />
+                <Image src={giftItem.imageUrl} alt={giftItem.name ?? ""} width={64} height={64}
+                  className="object-cover w-full h-full" unoptimized />
               ) : (
                 <Package className="h-7 w-7 m-4.5 text-muted-foreground" />
               )}
@@ -146,9 +144,7 @@ export default async function SedmichnoPredlozheniePage() {
             </div>
             <div className="text-right shrink-0 space-y-1">
               <Badge className="bg-amber-500 text-white">БЕЗПЛАТНО</Badge>
-              <p className="text-sm line-through text-muted-foreground">
-                {giftItem.price?.toFixed(2)} лв.
-              </p>
+              <p className="text-sm line-through text-muted-foreground">{giftItem.price?.toFixed(2)} лв.</p>
             </div>
           </div>
         </section>
@@ -174,12 +170,14 @@ export default async function SedmichnoPredlozheniePage() {
 
       {/* CTA */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button size="lg" asChild>
-          <Link href="/cart">
-            <ShoppingBag className="h-5 w-5 mr-2" />
-            Към количката
-          </Link>
-        </Button>
+        <AddBundleButton
+          offerId={offer.id}
+          title={offer.title}
+          comboPrice={offer.comboPrice}
+          stock={offer.stock}
+          coverImageUrl={coverImageUrl}
+          products={bundleProducts}
+        />
         <Button size="lg" variant="outline" asChild>
           <a href="tel:+359888745410">Обади се за поръчка</a>
         </Button>
